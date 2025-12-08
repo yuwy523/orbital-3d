@@ -26,6 +26,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   const [hasRequestedGuide, setHasRequestedGuide] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // Parse Description and Fun Fact
   const [descriptionText, funFactText] = React.useMemo(() => {
       const parts = planet.description.split('【冷知識】');
       return [parts[0].trim(), parts[1]?.trim()];
@@ -108,6 +109,13 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       }
   }, [planet.id]);
 
+  // Scroll to top when activeTab changes
+  useEffect(() => {
+      if (contentRef.current) {
+          contentRef.current.scrollTop = 0;
+      }
+  }, [activeTab]);
+
   const handleFetchGuide = () => {
       setHasRequestedGuide(true);
       setIsLoadingGuide(true);
@@ -122,10 +130,10 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
 
   const StatRow = ({ label, value, isLast = false, action }: { label: string, value: string | number, isLast?: boolean, action?: React.ReactNode }) => (
       <div className={`flex justify-between py-4 mr-5 ml-5 ${!isLast ? 'border-b border-slate-800' : ''}`}>
-          <span className="text-base font-medium text-slate-400 tracking-wide break-keep pr-3">{label}</span>
+          <span className="text-sm font-medium text-slate-400 tracking-wide break-keep pr-3">{label}</span>
           <div className="flex md:flex-wrap-reverse text-right items-center gap-3 ml-auto">
             {action}
-            <span className="text-base font-mono font-bold text-slate-300 text-right ml-auto">{value}</span>
+            <span className="text-sm font-mono font-bold text-slate-300 text-right ml-auto">{value}</span>
           </div>
       </div>
   );
@@ -137,10 +145,13 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     <div className="w-full font-sans h-full relative flex flex-col overflow-hidden">
       
       {/* Navigation Header - Fixed at Top (Static, not Sticky) */}
-      <div className="flex-shrink-0 z-30 bg-slate-950 border-b border-slate-800/50 pt-6 shadow-2xl transition-all duration-300 relative">
+      {/* CHANGED: pt-0 on mobile, md:pt-6 on desktop. Hidden header content on mobile. */}
+      <div className="flex-shrink-0 z-30 bg-slate-950 border-b border-slate-800/50 pt-0 md:pt-6 shadow-2xl transition-all duration-300 relative">
         
-        {/* Added px-6 to the inner content container */}
-        <div className={`flex flex-col gap-5 px-6 ${showObservationTab ? 'mb-5' : ''}`}>
+        {/* CHANGED: Hidden on Mobile. Mobile uses the Bottom Sheet handle for this info. */}
+        <div className={`hidden md:flex flex-col gap-5 px-6 ${showObservationTab ? 'mb-5' : ''}`}>
+             
+             {/* Back button */}
              <button 
                 onClick={onClose}
                 className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group w-max"
@@ -148,28 +159,28 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                 <div className="flex items-center justify-center rounded-full shadow-md transition-all duration-300">
                     <ArrowLeft size={20} />
                 </div>
-                <span className="text-base font-bold uppercase tracking-wide">返回</span>
+                <span className="text-sm font-bold uppercase tracking-wide">返回</span>
             </button>
-
+            
             <div>
                 <h2 className="text-xl font-bold text-slate-200 flex items-center gap-3 leading-7">
                     <span>{planet.name}</span>
                 </h2>
-                <p className="text-indigo-400 text-base font-bold uppercase tracking-widest mt-1.5">
+                <p className="text-indigo-400 text-sm font-bold uppercase tracking-widest mt-1.5">
                      {planet.type === 'terrestrial' ? '類地行星' : planet.type === 'gas' ? '氣態巨行星' : planet.type === 'ice' ? '冰巨行星' : planet.type === 'moon' ? '衛星' : '恆星'}
                 </p>
             </div>
         </div>
 
-        {/* Divider above tabs */}
-        {showObservationTab && <div className="w-full h-px bg-slate-800/50" />}
+        {/* Divider above tabs (Desktop only) */}
+        {showObservationTab && <div className="hidden md:block w-full h-px bg-slate-800/50" />}
 
         {/* Tabs - Full Width */}
         {showObservationTab && (
             <div className="relative flex w-full">
                 <button
                     onClick={() => setActiveTab('intro')}
-                    className={`flex-1 py-3 text-base font-bold tracking-widest uppercase transition-colors duration-300 flex items-center justify-center gap-2 ${
+                    className={`flex-1 py-3 text-sm font-bold tracking-widest uppercase transition-colors duration-300 flex items-center justify-center gap-2 ${
                         activeTab === 'intro' 
                         ? 'text-indigo-400' 
                         : 'text-slate-400 hover:text-slate-300'
@@ -180,7 +191,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                 </button>
                 <button
                     onClick={() => setActiveTab('observation')}
-                    className={`flex-1 py-3 text-base font-bold tracking-widest uppercase transition-colors duration-300 flex items-center justify-center gap-2 ${
+                    className={`flex-1 py-3 text-sm font-bold tracking-widest uppercase transition-colors duration-300 flex items-center justify-center gap-2 ${
                         activeTab === 'observation' 
                         ? 'text-indigo-400' 
                         : 'text-slate-400 hover:text-slate-300'
@@ -200,7 +211,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                 />
             </div>
         )}
-        {!showObservationTab && <div className="pb-5" />}
+        {!showObservationTab && <div className="hidden md:block pb-5" />}
       </div>
 
       {/* Main Content Area - Scrollable */}
@@ -214,7 +225,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               <div className="space-y-8">
                   {/* Description Section */}
                   <div className="space-y-6">
-                    <p className="text-slate-300 text-base font-normal leading-6 text-justify whitespace-pre-line">
+                    <p className="text-slate-300 text-sm font-normal leading-6 text-justify whitespace-pre-line">
                         {descriptionText}
                     </p>
 
@@ -226,11 +237,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                             </div>
                             
                             <div className="relative z-10 space-y-2">
-                                <h4 className="text-base text-indigo-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                                <h4 className="text-sm text-indigo-400 font-bold uppercase tracking-widest flex items-center gap-2">
                                     <Lightbulb size={14} className="text-indigo-400" />
                                     星際冷知識
                                 </h4>
-                                <p className="text-slate-300 text-base font-normal leading-6 text-justify">
+                                <p className="text-slate-300 text-sm font-normal leading-6 text-justify">
                                     {funFactText}
                                 </p>
                             </div>
@@ -319,7 +330,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                 {/* Observation Text */}
                 <div>
                     {planet.observationInfo ? (
-                        <p className="text-slate-300 text-base font-normal leading-6 text-justify whitespace-pre-line">
+                        <p className="text-slate-300 text-sm font-normal leading-6 text-justify whitespace-pre-line">
                             {planet.observationInfo}
                         </p>
                     ) : (
@@ -332,22 +343,22 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                     {!hasRequestedGuide ? (
                         <button 
                             onClick={handleFetchGuide}
-                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-slate-200 text-base font-medium rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/20 active:scale-[0.98]"
+                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-slate-200 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/20 active:scale-[0.98]"
                         >
                             <Telescope size={18} />
                             獲取今日香港觀測詳情
                         </button>
                     ) : isLoadingGuide ? (
-                        <div className="flex flex-col items-center gap-3 text-slate-300 text-base py-8 justify-center bg-slate-950/50 rounded-xl border border-slate-800/50">
+                        <div className="flex flex-col items-center gap-3 text-slate-300 text-sm py-8 justify-center bg-slate-950/50 rounded-xl border border-slate-800/50">
                             <Loader2 className="animate-spin text-indigo-400" size={24} />
                             <span>正在分析天體位置與實時數據...</span>
                         </div>
                     ) : (
-                        <div className="text-base text-slate-300 space-y-3 whitespace-pre-wrap leading-6 animate-in fade-in slide-in-from-bottom-2 bg-slate-950/50 p-5 rounded-xl border border-slate-800/60">
+                        <div className="text-sm text-slate-300 space-y-3 whitespace-pre-wrap leading-6 animate-in fade-in slide-in-from-bottom-2 bg-slate-950/50 p-5 rounded-xl border border-slate-800/60">
                             {aiGuide}
-                            <div className="mt-4 pt-3 border-t border-slate-800/50 text-sm text-slate-400 text-right flex items-center justify-end gap-1.5">
+                            <div className="mt-4 pt-3 border-t border-slate-800/50 text-xs text-slate-400 text-right flex items-center justify-end gap-1.5">
                                 <Sparkles size={14} className="text-indigo-400" /> 
-                                <span>Powered by AI (Demo Simulation)</span>
+                                <span>Powered by AI (demo only)</span>
                             </div>
                         </div>
                     )}
