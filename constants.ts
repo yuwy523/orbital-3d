@@ -88,7 +88,7 @@ export const PLANETS: PlanetData[] = [
     inclination: 2.19, 
     axialTilt: 177.3, 
     period: 0.62,
-    rotationPeriod: '4 天 (大氣超自轉)',
+    rotationPeriod: '243 天 (大氣繞行速度快60倍)',
     // Correction:
     // Body rotation is 243 days (very slow, 0.004).
     // Atmosphere rotation is ~4 days (fast).
