@@ -268,8 +268,8 @@ const App: React.FC = () => {
   // If expanded: 70dvh + 20px
   // If collapsed: headerHeight + 20px
   const controlsMobileBottom = isSheetExpanded 
-      ? 'calc(70dvh + 20px)' 
-      : `calc(${headerHeight} + 20px)`;
+      ? 'calc(70dvh + 24px)' 
+      : `calc(${headerHeight} + 24px)`;
 
 
   return (
