@@ -415,7 +415,7 @@ const generateRingTexture = (planetId: string) => {
         const muEnd = getRad(3.9);
         const muWidth = muEnd - muStart;
         const muMid = muStart + muWidth / 2;
-        drawBand(muMid, nuWidth, muColor, 0.1); // Very wide, very faint
+        drawBand(muMid, muWidth, muColor, 0.1); // Very wide, very faint
 
     } else {
         // --- SATURN RINGS ---
@@ -1346,6 +1346,8 @@ const SolarSystem: React.FC<SolarSystemProps> = ({
 
         if (hasTarget && currentSelectedId && !isResettingRef.current) {
             // Apply Dynamic Mobile Offset when zooming into a planet
+            // This ensures the planet appears higher on screen (clearing the bottom sheet)
+            // Use window.innerWidth to correctly detect mobile viewport for camera offset
             if (window.innerWidth < 768) {
                  const pData = PLANETS.find(p => p.id === currentSelectedId);
                  if (pData) {
@@ -1373,6 +1375,7 @@ const SolarSystem: React.FC<SolarSystemProps> = ({
             // Apply Initial Target Offset on Reset (Responsive)
             // Mobile (<768px): Y = -2500 (Move model up)
             // Desktop: Y = 0 (Center)
+            // Use window.innerWidth to correctly detect mobile viewport for camera offset
             const isMobile = window.innerWidth < 768;
             const offsetY = isMobile ? -2500 : 0;
             
@@ -1616,7 +1619,8 @@ const SolarSystem: React.FC<SolarSystemProps> = ({
                    const planetBody = tiltGroup.children.find((c: any) => c.name === 'planetMesh');
                    if (planetBody) {
                        if (pos.id === 'moon' || ['io', 'europa', 'ganymede', 'callisto', 'titan'].includes(pos.id)) {
-                           planetBody.rotation.y = -pos.angle - Math.PI / 2;
+                           // Adjusted for tidal locking: add Math.PI offset to face the planet (inside) instead of space (outside)
+                           planetBody.rotation.y = -pos.angle + Math.PI;
                        } else {
                            const speedFactor = PLANETS.find(p => p.id === pos.id)?.rotationSpeed || 1;
                            const baseSpeed = 0.000625; 
