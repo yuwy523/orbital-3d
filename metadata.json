@@ -1,0 +1,5 @@
+{
+  "name": "Orbital: 3D Solar Explorer",
+  "description": "An interactive solar system visualization simulating planetary orbits, distances, and phases. Features AI-powered astronomical explanations.",
+  "requestFramePermissions": []
+}
