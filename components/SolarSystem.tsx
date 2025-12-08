@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -14,7 +15,9 @@ const CAMERA_CONFIG = {
     // Zoom out 的最大距離
     MAX_DISTANCE: 500000, 
     MIN_DISTANCE: 0.0001,
-    INITIAL_POS: { x: 0, y: 30000, z: 60000 }
+    INITIAL_POS: { x: 0, y: 30000, z: 60000 },
+    // 預設注視點 (y:0 為中心)
+    INITIAL_TARGET: { x: 0, y: 0, z: 0 }
 };
 
 // ==========================================
@@ -412,7 +415,7 @@ const generateRingTexture = (planetId: string) => {
         const muEnd = getRad(3.9);
         const muWidth = muEnd - muStart;
         const muMid = muStart + muWidth / 2;
-        drawBand(muMid, muWidth, muColor, 0.1); // Very wide, very faint
+        drawBand(muMid, nuWidth, muColor, 0.1); // Very wide, very faint
 
     } else {
         // --- SATURN RINGS ---
@@ -655,6 +658,17 @@ const SolarSystem: React.FC<SolarSystemProps> = ({
     // USE CAMERA_CONFIG DISTANCES
     controls.minDistance = CAMERA_CONFIG.MIN_DISTANCE; 
     controls.maxDistance = CAMERA_CONFIG.MAX_DISTANCE; 
+    
+    // Set initial target with offset based on viewport
+    // If mobile (<768px), move target down (Y=-1800) to effectively move camera up relative to model
+    const initialYOffset = window.innerWidth < 768 ? -1800 : 0;
+
+    controls.target.set(
+        CAMERA_CONFIG.INITIAL_TARGET.x,
+        CAMERA_CONFIG.INITIAL_TARGET.y + initialYOffset,
+        CAMERA_CONFIG.INITIAL_TARGET.z
+    );
+
     controlsRef.current = controls;
 
     controls.addEventListener('start', () => {
@@ -1331,6 +1345,20 @@ const SolarSystem: React.FC<SolarSystemProps> = ({
         }
 
         if (hasTarget && currentSelectedId && !isResettingRef.current) {
+            // Apply Dynamic Mobile Offset when zooming into a planet
+            // This ensures the planet appears higher on screen (clearing the bottom sheet)
+            if (window.innerWidth < 768) {
+                 const pData = PLANETS.find(p => p.id === currentSelectedId);
+                 if (pData) {
+                     let r = pData.radius;
+                     if (['saturn', 'uranus', 'neptune'].includes(pData.id)) r *= RING_SYSTEM_SCALE_FACTOR;
+                     if (pData.id === 'sun') r *= 1.2;
+                     
+                     // Decrease Y target to make camera look lower -> Planet appears higher
+                     desiredTarget.y -= r * 0.45;
+                 }
+            }
+
             if (previousTargetPosRef.current) {
                  const delta = new THREE.Vector3().subVectors(desiredTarget, previousTargetPosRef.current);
                  controlsRef.current!.target.add(delta);
@@ -1343,7 +1371,17 @@ const SolarSystem: React.FC<SolarSystemProps> = ({
         const dampFactor = 1 - Math.exp(-4.0 * dt);
 
         if (isResettingRef.current) {
-            const defaultTarget = new THREE.Vector3(0, 0, 0);
+            // Apply Initial Target Offset on Reset (Responsive)
+            // Mobile (<768px): Y = -2500 (Move model up)
+            // Desktop: Y = 0 (Center)
+            const isMobile = window.innerWidth < 768;
+            const offsetY = isMobile ? -2500 : 0;
+            
+            const defaultTarget = new THREE.Vector3(
+                CAMERA_CONFIG.INITIAL_TARGET.x,
+                CAMERA_CONFIG.INITIAL_TARGET.y + offsetY,
+                CAMERA_CONFIG.INITIAL_TARGET.z
+            );
             // USE CAMERA_CONFIG DEFAULT POS
             const defaultCamPos = new THREE.Vector3(CAMERA_CONFIG.INITIAL_POS.x, CAMERA_CONFIG.INITIAL_POS.y, CAMERA_CONFIG.INITIAL_POS.z); 
 
