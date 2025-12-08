@@ -1,8 +1,14 @@
+html, body, #root {
+  height: 100dvh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 body {
   background-color: #000000;
   color: #f8fafc;
-  overflow: hidden;
-  margin: 0;
   font-size: 14px;
 }
 
@@ -52,12 +58,4 @@ body {
 .planet-label:hover {
   color: #fff;
   text-shadow: 0 0 8px rgba(255,255,255,0.5);
-}
-
-.text-base {
-  font-size: 0.875rem;
-}
-
-.text-sm {
-  font-size: 0.75rem;
 }

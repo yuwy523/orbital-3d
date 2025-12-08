@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import SolarSystem from './components/SolarSystem';
 import Controls from './components/Controls';
 import InfoPanel from './components/InfoPanel';
 import { PLANETS } from './constants';
 import { PlanetPosition, PlanetData } from './types';
-import { Menu, X } from 'lucide-react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 
 // Helper Component for Sidebar Item to avoid code duplication
 const SidebarPlanetItem: React.FC<{ p: PlanetData, onClick: (id: string) => void }> = ({ p, onClick }) => {
@@ -25,10 +26,10 @@ const SidebarPlanetItem: React.FC<{ p: PlanetData, onClick: (id: string) => void
                 }}
             />
             <div className="flex flex-col min-w-0">
-                <span className="text-base font-bold text-slate-200 group-hover:text-white truncate">
+                <span className="text-sm font-bold text-slate-200 group-hover:text-white truncate">
                     {chName}
                 </span>
-                <span className="text-sm font-bold text-slate-400 uppercase tracking-wider group-hover:text-indigo-300 transition-colors truncate">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-indigo-300 transition-colors truncate">
                     {engName}
                 </span>
             </div>
@@ -55,8 +56,8 @@ const App: React.FC = () => {
   // This ensures content persists during the "slide-out" animation even after selectedPlanetId becomes null
   const [detailPlanet, setDetailPlanet] = useState<PlanetData | null>(null);
   
-  // Mobile Sidebar State
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Mobile Bottom Sheet State
+  const [isSheetExpanded, setIsSheetExpanded] = useState(false);
   
   // Refs for animation loop
   const requestRef = useRef<number | null>(null);
@@ -77,7 +78,8 @@ const App: React.FC = () => {
         const p = PLANETS.find(p => p.id === selectedPlanetId) || null;
         if (p) setDetailPlanet(p);
 
-        // Scroll logic moved to InfoPanel component for internal content
+        // DEFAULT COLLAPSED on mobile selection per user request
+        setIsSheetExpanded(false);
     } else {
         // Reset Home Panel scroll when returning to list view
         if (homePanelRef.current) {
@@ -87,8 +89,6 @@ const App: React.FC = () => {
             });
         }
     }
-    // Note: We intentionally DO NOT clear detailPlanet when selectedPlanetId becomes null
-    // This allows the panel to slide out while still showing the old data
     
     // Reset Axial Tilt visualization when planet changes
     setShowAxialTilt(false);
@@ -117,8 +117,6 @@ const App: React.FC = () => {
 
   /**
    * Calculates the 3D position in Space.
-   * NOTE: For moons (Titan, Galilean), this returns LOCAL coordinates (relative to parent).
-   * The SolarSystem component handles parenting logic to ensure they follow Axial Tilt.
    */
   const calculatePlanetPosition = useCallback((planetId: string, currentDay: number): PlanetPosition => {
       const planet = PLANETS.find(p => p.id === planetId)!;
@@ -134,7 +132,6 @@ const App: React.FC = () => {
       const E = solveKepler(M, planet.eccentricity);
 
       // 2. Heliocentric Coordinates (Orbital Plane)
-      // Note: If planet has parentId, this is relative to parent's center
       const a = planet.orbitRadius;
       const e = planet.eccentricity;
       const b = a * Math.sqrt(1 - e * e);
@@ -147,27 +144,15 @@ const App: React.FC = () => {
       const xPlane = xCenter * Math.cos(angleRad) - yCenter * Math.sin(angleRad);
       const yPlane = xCenter * Math.sin(angleRad) + yCenter * Math.cos(angleRad);
 
-      // 3. Inclination (Vertical Z-height in physics, Y in Three.js)
+      // 3. Inclination
       const trueAnomaly = Math.atan2(yPlane, xPlane);
       const inclinationRad = (planet.inclination * Math.PI) / 180;
       const zHeight = planet.orbitRadius * Math.sin(inclinationRad) * Math.sin(trueAnomaly);
 
       // Initial Local Position (relative to orbit center)
       let finalX = xPlane;
-      let finalY = zHeight; // Inclination is Up/Down (Y in ThreeJS)
-      let finalZ = yPlane;  // Orbital 'y' is depth (Z in ThreeJS)
-
-      // 4. Handle Parent (Moons)
-      // UPDATE: We do NOT add parent position here for rendering.
-      // SolarSystem.tsx uses Three.js scene graph parenting for moons to handle Axial Tilt correctly.
-      // Thus, we return LOCAL coordinates for children.
-      if (planet.parentId) {
-         // No-op for position summation.
-         // However, Earth's Moon might be an exception depending on SolarSystem logic.
-         // Given SolarSystem now handles parenting for everyone, we keep it consistent.
-         // BUT check: Earth's Moon is parented to OrbitGroup (untilted), Titan to TiltGroup (tilted).
-         // In both cases, Local Coords are expected.
-      }
+      let finalY = zHeight; 
+      let finalZ = yPlane;
 
       return {
         id: planet.id,
@@ -176,7 +161,7 @@ const App: React.FC = () => {
         z: finalZ,  
         scale: 1, 
         angle: trueAnomaly, 
-        distanceFromSun: Math.sqrt(finalX * finalX + finalZ * finalZ) // Approx for moons
+        distanceFromSun: Math.sqrt(finalX * finalX + finalZ * finalZ) 
       };
   }, [solveKepler]);
 
@@ -201,38 +186,27 @@ const App: React.FC = () => {
     };
   }, [animate]);
 
-  // Handle selection from 3D View (with Mobile Delay)
+  // Handle selection from 3D View
   const handle3DSelection = (id: string) => {
     setSelectedPlanetId(id);
-    
-    // Check if mobile (Tailwind md breakpoint is 768px)
-    if (window.innerWidth < 768) {
-        // Delay opening sidebar to allow 3D transition to be seen
-        setTimeout(() => {
-            setIsSidebarOpen(true);
-        }, 2800); 
-    } else {
-        // Desktop: Immediate
-        setIsSidebarOpen(true);
-    }
+    // Explicitly collapse the sheet on selection
+    setIsSheetExpanded(false); 
   };
 
   // Handle selection from Sidebar List
   const handleSidebarSelection = (id: string) => {
     setSelectedPlanetId(id);
-    // If not visible on mobile, open it. If on desktop, it's always open (relative).
-    setIsSidebarOpen(true);
+    // Explicitly collapse the sheet on selection
+    setIsSheetExpanded(false);
   };
   
   const handleResetCamera = () => {
     setSelectedPlanetId(null);
     setCameraResetTrigger(prev => prev + 1);
+    setIsSheetExpanded(false); // Collapse on reset
   };
 
-  // Shared button style for Floating Action Buttons (FABs)
-  const fabStyle = "w-11 h-11 flex items-center justify-center rounded-full bg-slate-800/90 backdrop-blur-md border border-slate-700 text-slate-200 shadow-lg hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-all duration-300";
-
-  // Memoized handlers for InfoPanel to prevent re-renders on every frame (animation loop)
+  // Memoized handlers for InfoPanel
   const toggleAxialTilt = useCallback(() => {
     setShowAxialTilt(prev => !prev);
   }, []);
@@ -241,10 +215,7 @@ const App: React.FC = () => {
     setSelectedPlanetId(null);
   }, []);
 
-  // Helper to reconstruct World Position for UI (InfoPanel)
-  // Since positions state is now Local-Only for moons, we must sum manually for the UI.
-  // Note: This simple sum ignores the Parent's Axial Tilt rotation, but for "Distance to Earth" text,
-  // the error (< 0.1%) is acceptable vs the complexity of reimplementing Matrix4 logic here.
+  // Helper wrapper for InfoPanel real position calculation
   const calcRealPosWrapper = useCallback((pid: string) => {
       const localPos = calculatePlanetPosition(pid, realWorldDay);
       const pData = PLANETS.find(p => p.id === pid);
@@ -271,80 +242,105 @@ const App: React.FC = () => {
   const moons = useMemo(() => PLANETS.filter(p => p.type === 'moon'), []);
 
 
+  // Logic for Mobile Bottom Sheet Header
+  const mobileHeaderTitle = useMemo(() => {
+      if (!selectedPlanetId) return "選擇天體";
+      if (detailPlanet) {
+          return detailPlanet.name; // Use full name for InfoPanel visual match
+      }
+      return "Loading...";
+  }, [selectedPlanetId, detailPlanet]);
+
+  const mobileHeaderSubtitle = useMemo(() => {
+      if (!selectedPlanetId || !detailPlanet) return "Default";
+      return detailPlanet.type === 'terrestrial' ? '類地行星' : detailPlanet.type === 'gas' ? '氣態巨行星' : detailPlanet.type === 'ice' ? '冰巨行星' : detailPlanet.type === 'moon' ? '衛星' : '恆星';
+  }, [selectedPlanetId, detailPlanet]);
+
+  // Dynamic Header Height Calculation
+  const headerHeight = selectedPlanetId ? '5.5rem' : '3.5rem';
+  
+  // Calculate the class for mobile height
+  const mobileHeightClass = isSheetExpanded 
+    ? 'h-[70dvh]' 
+    : (selectedPlanetId ? 'h-[5.5rem]' : 'h-[3.5rem]');
+  
+  // Dynamic Controls Position Calculation
+  // If expanded: 70dvh + 20px
+  // If collapsed: headerHeight + 20px
+  const controlsMobileBottom = isSheetExpanded 
+      ? 'calc(70dvh + 20px)' 
+      : `calc(${headerHeight} + 20px)`;
+
+
   return (
-    <div className="w-full h-screen flex flex-col md:flex-row bg-[#020617] overflow-hidden text-slate-100 font-sans relative">
+    <div className="w-full h-[100dvh] flex flex-col md:flex-row bg-[#020617] overflow-hidden text-slate-100 font-sans relative">
       
-      {/* Mobile Menu Button (Visible only when closed) */}
-      {!isSidebarOpen && (
-        <button 
-            className={`md:hidden absolute top-4 left-4 z-50 animate-in fade-in ${fabStyle}`}
-            onClick={() => {
-                // Use rAF to ensure smooth UI update start
-                requestAnimationFrame(() => setIsSidebarOpen(true));
-            }}
-            aria-label="Open Menu"
-        >
-            <Menu size={24} />
-        </button>
-      )}
-
-      {/* Mobile Close Button (Visible only when open, floating NEXT TO the sidebar) */}
-      {isSidebarOpen && (
-        <button 
-            className={`md:hidden fixed top-4 z-[210] animate-in fade-in slide-in-from-left duration-300 ${fabStyle}`}
-            style={{ 
-                // Position it dynamically based on sidebar width: min(20rem, 85vw) + slight gap
-                left: 'calc(min(20rem, 85vw) + 12px)' 
-            }}
-            onClick={() => setIsSidebarOpen(false)}
-            aria-label="Close Menu"
-        >
-            <X size={24} />
-        </button>
-      )}
-
-      {/* Mobile Overlay - Closes sidebar when clicking outside */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 z-[190] bg-black/60 backdrop-blur-[2px] md:hidden transition-opacity"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Container */}
+      {/* 
+         SIDEBAR / BOTTOM SHEET CONTAINER
+         Desktop: Left Sidebar, Relative (in flow), Full Height
+         Mobile: Bottom Sheet, Fixed, Translatable
+      */}
       <aside 
         ref={sidebarRef}
         className={`
-          fixed md:relative top-0 left-0 z-[200] md:z-40 h-full
-          w-80 lg:w-[385px] md:max-w-none flex-shrink-0
-          bg-slate-950/95 backdrop-blur-xl border-r border-slate-800 shadow-2xl
-          transition-transform duration-300 ease-in-out
           flex flex-col
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          bg-slate-950/95 backdrop-blur-xl border-slate-800 shadow-2xl
+          transition-all duration-300 ease-in-out z-[200]
+          
+          md:relative md:w-auto md:min-w-[256px] lg:w-[385px] md:border-r md:rounded-none md:translate-y-0
+          
+          fixed bottom-0 left-0 right-0 w-full border-t
+          ${mobileHeightClass} md:h-full
         `}
       >
+        {/* MOBILE HEADER HANDLE (Visible only on Mobile) */}
+        <div 
+            className={`md:hidden flex items-center justify-between px-6 bg-slate-900/80 border-b border-slate-800 cursor-pointer touch-none transition-all duration-300 ${selectedPlanetId ? 'h-24 py-4' : 'h-14 py-3'}`}
+            onClick={() => setIsSheetExpanded(!isSheetExpanded)}
+        >
+            <div className="flex flex-col justify-center gap-1">
+                <span className={`${selectedPlanetId ? 'text-xl font-bold text-slate-200' : 'text-base font-bold text-slate-300'}`}>
+                    {mobileHeaderTitle}
+                </span>
+                {selectedPlanetId && (
+                    <span className="text-indigo-400 text-sm font-bold uppercase tracking-widest animate-in fade-in slide-in-from-left-2">
+                        {mobileHeaderSubtitle}
+                    </span>
+                )}
+            </div>
+            <div className="text-slate-400">
+                {isSheetExpanded ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+            </div>
+        </div>
+
+
         {/* 
-            SLIDING VIEW CONTAINER 
+            SLIDING VIEW CONTAINER (Content Body)
+            Desktop: Standard
+            Mobile: Scrollable area below the handle
         */}
-        <div className="relative w-full h-full overflow-hidden">
+        <div className="relative w-full flex-1 overflow-hidden">
             
             {/* VIEW 1: HOME DASHBOARD (Planet List) */}
             <div 
                 ref={homePanelRef}
                 className={`
-                    absolute inset-0 w-full h-full overflow-y-auto custom-scrollbar px-6 pt-6 pb-8
+                    absolute inset-0 w-full h-full overflow-y-auto custom-scrollbar px-6 pt-2 md:pt-6 pb-8
                     transition-all duration-500 ease-in-out will-change-transform backface-hidden
                     ${selectedPlanetId ? '-translate-x-[20%] opacity-0 pointer-events-none' : 'translate-x-0 opacity-100 pointer-events-auto'}
                 `}
                 style={{ backfaceVisibility: 'hidden' }}
             >
                 <div className="flex flex-col min-h-full">
-                    <header className="mb-8 mt-4 md:mt-0 flex-shrink-0">
+                    {/* Website Title: Hidden on Mobile as per requirements */}
+                    <header className="mb-8 mt-4 md:mt-0 flex-shrink-0 hidden md:block">
                       <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent tracking-wide">
                         ORBITAL
                       </h1>
-                      <p className="text-base text-slate-400 font-medium tracking-wide">3D Solar Explorer</p>
+                      <p className="text-sm text-slate-400 font-medium tracking-wide">3D Solar Explorer</p>
                     </header>
+                    {/* Spacer for Mobile to not stick to top immediately */}
+                    <div className="md:hidden h-4"></div>
 
                     <div className="flex-grow flex flex-col">
                         
@@ -354,7 +350,8 @@ const App: React.FC = () => {
                                 <div className="flex items-center gap-2 mb-3 border-b border-slate-800/50 pb-2">
                                      <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">恆星 (Stars)</span>
                                 </div>
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                {/* GRID LAYOUT UPDATE: 2 cols on mobile, 1 on tablet, 2 on desktop */}
+                                <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-3">
                                     {stars.map(p => (
                                         <SidebarPlanetItem key={p.id} p={p} onClick={handleSidebarSelection} />
                                     ))}
@@ -368,7 +365,8 @@ const App: React.FC = () => {
                                 <div className="flex items-center gap-2 mb-3 border-b border-slate-800/50 pb-2">
                                      <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">行星 (Planets)</span>
                                 </div>
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                {/* GRID LAYOUT UPDATE: 2 cols on mobile, 1 on tablet, 2 on desktop */}
+                                <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-3">
                                     {planetsList.map(p => (
                                         <SidebarPlanetItem key={p.id} p={p} onClick={handleSidebarSelection} />
                                     ))}
@@ -382,7 +380,8 @@ const App: React.FC = () => {
                                 <div className="flex items-center gap-2 mb-3 border-b border-slate-800/50 pb-2">
                                      <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">衛星 (Moons)</span>
                                 </div>
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                {/* GRID LAYOUT UPDATE: 2 cols on mobile, 1 on tablet, 2 on desktop */}
+                                <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-3">
                                     {moons.map(p => (
                                         <SidebarPlanetItem key={p.id} p={p} onClick={handleSidebarSelection} />
                                     ))}
@@ -395,8 +394,6 @@ const App: React.FC = () => {
             </div>
 
             {/* VIEW 2: SELECTED PLANET DETAIL */}
-            {/* Removed overflow-y-auto, custom-scrollbar and scrollbar-gutter from container */}
-            {/* InfoPanel now manages its own internal scrolling to support fixed header */}
             <div 
                 ref={detailPanelRef}
                 className={`
@@ -422,7 +419,12 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Visualization Area */}
-      <main className="flex-grow w-full h-full relative bg-[#000000]">
+      {/* 
+          flex-1: Fills the remaining space next to the sidebar on desktop.
+          min-w-0: Allows flex item to shrink below content size if needed (prevents overflow).
+          h-full: Fills height.
+      */}
+      <main className="flex-1 min-w-0 h-full relative bg-[#000000]">
         <SolarSystem 
           positions={positions}
           selectedPlanetId={selectedPlanetId}
@@ -443,6 +445,7 @@ const App: React.FC = () => {
            onResetCamera={handleResetCamera}
            showOrbits={showOrbits}
            onToggleOrbits={() => setShowOrbits(!showOrbits)}
+           mobileBottomOffset={controlsMobileBottom}
         />
       </main>
     </div>

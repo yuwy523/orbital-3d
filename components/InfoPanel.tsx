@@ -26,7 +26,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   const [hasRequestedGuide, setHasRequestedGuide] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Parse Description and Fun Fact
   const [descriptionText, funFactText] = React.useMemo(() => {
       const parts = planet.description.split('【冷知識】');
       return [parts[0].trim(), parts[1]?.trim()];

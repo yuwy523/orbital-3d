@@ -1346,7 +1346,6 @@ const SolarSystem: React.FC<SolarSystemProps> = ({
 
         if (hasTarget && currentSelectedId && !isResettingRef.current) {
             // Apply Dynamic Mobile Offset when zooming into a planet
-            // This ensures the planet appears higher on screen (clearing the bottom sheet)
             if (window.innerWidth < 768) {
                  const pData = PLANETS.find(p => p.id === currentSelectedId);
                  if (pData) {

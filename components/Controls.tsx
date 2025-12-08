@@ -9,6 +9,7 @@ interface ControlsProps {
   onResetCamera: () => void;
   showOrbits: boolean;
   onToggleOrbits: () => void;
+  mobileBottomOffset?: string;
 }
 
 // Custom Icon for Orbit (Show) - Solar System Style
@@ -63,6 +64,7 @@ const Controls: React.FC<ControlsProps> = ({
   onResetCamera,
   showOrbits,
   onToggleOrbits,
+  mobileBottomOffset,
 }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
@@ -73,7 +75,7 @@ const Controls: React.FC<ControlsProps> = ({
     
     audioRef.current = new Audio(audioUrl);
     audioRef.current.loop = true;
-    audioRef.current.volume = 1; 
+    audioRef.current.volume = 0.4; 
 
     // Attempt auto-play
     const playPromise = audioRef.current.play();
@@ -117,6 +119,7 @@ const Controls: React.FC<ControlsProps> = ({
       if (val <= 0.003125) return "5x";
       if (val <= 0.00625) return "10x";
       if (val <= 0.0125) return "20x";
+      if (val <= 0.03125) return "50x";
       return "100x";
   };
 
@@ -126,13 +129,15 @@ const Controls: React.FC<ControlsProps> = ({
       { label: "5x", value: 0.003125 },
       { label: "10x", value: 0.00625 }, // This was roughly the old 1x
       { label: "20x", value: 0.0125 },
+      { label: "50x", value: 0.03125 },
       { label: "100x", value: 0.0625 },
   ];
 
   return (
-    // Wrapper Container: Centers the entire group relative to the visualization area
-    // Flex layout aligns the taller control bar and the shorter music button on their vertical centers
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4 w-max max-w-[90vw] animate-in fade-in slide-in-from-bottom-6">
+    <div 
+      className="absolute left-1/2 -translate-x-1/2 z-[150] flex items-center gap-4 w-max max-w-[90vw] animate-in fade-in slide-in-from-bottom-6 transition-[bottom] duration-300 max-md:bottom-[var(--mobile-bottom-offset)] md:bottom-8"
+      style={{ '--mobile-bottom-offset': mobileBottomOffset } as React.CSSProperties}
+    >
       
       {/* Main Control Bar - Model Controls */}
       <div className="flex items-center gap-3 px-3 py-3 bg-slate-950/80 backdrop-blur-2xl border border-slate-800/80 rounded-full shadow-2xl">
@@ -188,7 +193,7 @@ const Controls: React.FC<ControlsProps> = ({
                   ? 'bg-slate-800 text-white border-slate-600' 
                   : 'text-slate-200 border-transparent hover:text-white hover:bg-slate-800/50'
               }`}
-              title="調整演化速度"
+              title="調整速度"
             >
               <Gauge size={18} />
               <span className="text-xs font-medium font-mono leading-none">{getSpeedLabel(speed)}</span>
@@ -212,7 +217,7 @@ const Controls: React.FC<ControlsProps> = ({
         <button 
           onClick={onResetCamera} 
           className="w-11 h-11 flex items-center justify-center rounded-full text-slate-200 border border-transparent hover:text-white hover:bg-slate-800/50 transition-all duration-300 group"
-          title="重置視角"
+          title="重置"
         >
            <RotateCcw size={20} className="group-hover:-rotate-180 transition-transform duration-500" />
         </button>
@@ -226,7 +231,7 @@ const Controls: React.FC<ControlsProps> = ({
             ? 'bg-indigo-950/80 border border-indigo-500/50 text-indigo-400 hover:bg-indigo-900/80 hover:text-indigo-300' 
             : 'bg-slate-950/80 border border-slate-800/80 text-slate-200 hover:bg-slate-900/90 hover:text-white'
         }`}
-        title="背景氛圍"
+        title={isMuted ? "播放音樂" : "暫停音樂"}
       >
         {!isMuted ? <Volume2 size={20} /> : <VolumeX size={20} />}
       </button>
