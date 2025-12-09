@@ -62,7 +62,7 @@ export const PLANETS: PlanetData[] = [
     inclination: 6.34, 
     axialTilt: 0.03,
     period: 0.24,
-    rotationPeriod: '58.6 天',
+    rotationPeriod: '58.65 天',
     rotationSpeed: 0.017, 
     description: '水星是太陽系最小且最靠近太陽的行星。它幾乎沒有大氣層來保留熱量，導致晝夜溫差極端劇烈（白天攝氏 430 度，夜晚降至零下 180 度）。其表面布滿了密密麻麻的隕石坑，外觀與月球極為相似，但水星擁有一個異常巨大的鐵質核心，約佔其體積的 85%，使其成為太陽系中密度第二高的行星。',
     observationInfo: '水星常年淹沒在太陽的耀眼光芒中，是「金木水火土」五星中最難觀測的一顆。最佳時機是在「東大距」（日落後西方低空）或「西大距」（日出前東方低空）的前後幾天。透過天文望遠鏡，可以看出它像月球一樣有盈虧變化，但難以看到表面細節。',
@@ -88,15 +88,9 @@ export const PLANETS: PlanetData[] = [
     inclination: 2.19, 
     axialTilt: 177.3, 
     period: 0.62,
-    rotationPeriod: '243 天 (大氣繞行速度快60倍)',
-    // Correction:
-    // Body rotation is 243 days (very slow, 0.004).
-    // Atmosphere rotation is ~4 days (fast).
-    // Since the texture displays CLOUDS, we must use the atmospheric speed for visual realism.
-    // 24 hours (Earth) = 1.0. 
-    // 4 days = 96 hours. 24/96 = 0.25.
+    rotationPeriod: '243.03 天',
     rotationSpeed: 0.25, 
-    description: '金星常被稱為地球的「姊妹星」，但環境截然不同。其轉軸傾角高達 177.3 度，意味著它是「倒著轉」的（逆行自轉）。雖然金星的岩石表面自轉極慢（243 天一圈），但其濃厚的大氣層卻以驚人的速度旋轉，僅需 4 天就能繞行行星一圈，這種現象稱為「大氣超自轉」。本模型為了符合視覺貼圖（雲層），呈現的是大氣層的旋轉速度。',
+    description: '金星常被稱為地球的「姊妹星」，但環境截然不同。其轉軸傾角高達 177.3 度，意味著它是「倒著轉」的（逆行自轉）。雖然金星的岩石表面自轉極慢（243 天一圈），但其濃厚的大氣層卻以驚人的速度旋轉，僅需 4 天就能繞行行星一圈，這種現象稱為「大氣超自轉」。',
     observationInfo: '金星是全天最亮的行星，古稱「太白金星」。當它位於太陽西側時稱為「啟明」（晨星），位於東側時稱為「長庚」（昏星）。使用雙筒望遠鏡即可輕易觀察到它的相位變化（如眉月狀或半月狀），這是伽利略當年證明「日心說」的關鍵證據之一。',
     realDistanceAU: 0.72,
     type: 'terrestrial',
@@ -148,7 +142,7 @@ export const PLANETS: PlanetData[] = [
     inclination: 5.145, 
     axialTilt: 6.68, 
     period: 0.0748, 
-    rotationPeriod: '27.3 天 (同步自轉)',
+    rotationPeriod: '27.32 天',
     rotationSpeed: 0.0366, 
     description: '月球是地球唯一的天然衛星，也是人類唯一踏足過的地外天體。它是一顆分化的岩石星球，表面布滿了撞擊坑與古老的火山熔岩平原（月海）。由於缺乏大氣與地質活動，月球忠實地記錄了太陽系早期的撞擊歷史。其引力牽引是地球海洋產生潮汐的主要原因，同時也穩定了地球的自轉軸傾角。',
     observationInfo: '觀測月球的最佳時機是「上弦」或「下弦」期間，而非滿月。此時陽光側面照射，在晨昏線（明暗交界處）附近會投下長長的影子，透過雙筒或小型望遠鏡，可以極為清晰地看到環形山的立體結構、山脈的高度以及月溪（乾涸的熔岩河道）。',
@@ -226,8 +220,8 @@ export const PLANETS: PlanetData[] = [
     orbitAngle: 0, 
     inclination: 0.04, // Corrected: 0.04 deg to Jupiter equator
     axialTilt: 0, // Corrected: 0 deg
-    period: 0.0048, // 1.77 Days
-    rotationPeriod: '1.77 天 (同步)',
+    period: 0.00485,
+    rotationPeriod: '1.77 天',
     rotationSpeed: 0.56, 
     description: '木衛一（Io）是太陽系中火山活動最劇烈的天體。受到木星巨大的引力以及外側木衛二、木衛三的軌道共振影響，其內部不斷受到潮汐力的拉扯與摩擦，產生極高的熱能。這導致其表面遍布數百座活火山，噴發出的硫磺與二氧化硫羽流可高達 500 公里，將地表染成鮮豔的黃色、橙色與紅色，且地貌變化極快。',
     observationInfo: '在小型望遠鏡中，木衛一是一個緊貼木星的小亮點。它的特點是移動速度極快，公轉週期僅 1.77 天。在幾個小時的觀測期間內，你就能明顯察覺它相對於木星的位置發生了改變。它是觀測「木衛互食」現象的最佳目標。',
@@ -253,8 +247,8 @@ export const PLANETS: PlanetData[] = [
     orbitAngle: 45, 
     inclination: 0.46, // Corrected: 0.46 deg to Jupiter equator
     axialTilt: 0.1, // Corrected: 0.1 deg
-    period: 0.0097, // 3.55 Days
-    rotationPeriod: '3.55 天 (同步)',
+    period: 0.00973,
+    rotationPeriod: '3.55 天',
     rotationSpeed: 0.28, 
     description: '木衛二（Europa）表面異常光滑，覆蓋著一層厚厚的冰殼，幾乎沒有隕石坑。科學家有強烈證據顯示，在冰層之下存在一個深邃的全球性鹹水海洋，其水量甚至比地球所有海洋的總和還多。這個地下海洋由潮汐加熱維持液態，並可能與海底岩石發生化學反應，是尋找地外生命最有希望的地方之一。',
     observationInfo: '木衛二在望遠鏡中呈現為白色的微弱星點。由於其表面由水冰組成，反照率極高（約 0.64）。當它經過木星盤面（凌木）時，在大口徑望遠鏡下有時難以分辨，但其投下的黑色影子則相對容易被看到。',
@@ -280,8 +274,8 @@ export const PLANETS: PlanetData[] = [
     orbitAngle: 90, 
     inclination: 0.18, // Corrected: 0.18 deg to Jupiter equator
     axialTilt: 0.2, // Corrected: 0.2 deg
-    period: 0.0196, // 7.15 Days
-    rotationPeriod: '7.15 天 (同步)',
+    period: 0.01958,
+    rotationPeriod: '7.15 天',
     rotationSpeed: 0.14, 
     description: '木衛三（Ganymede）是太陽系中體積最大的衛星，直徑甚至超過了水星。它是唯一已知擁有自己磁圈的衛星，這意味著其內部擁有一個活躍的熔融鐵核。其表面混合了兩種地形：布滿撞擊坑的古老暗區，以及由構造活動形成的年輕明亮槽溝，顯示其過去曾經歷過劇烈的地殼變動。',
     observationInfo: '木衛三是四顆伽利略衛星中最亮的一顆（約 4.6 等）。若視力極佳且環境極黑，理論上肉眼可見，但通常被木星的光芒淹沒。使用望遠鏡觀測時，它是最容易辨識的衛星。在專業的高倍率天文攝影中，甚至能拍出其表面的明暗斑塊。',
@@ -307,8 +301,8 @@ export const PLANETS: PlanetData[] = [
     orbitAngle: 180, 
     inclination: 0.28, // Corrected: 0.28 deg to Jupiter equator
     axialTilt: 0, // Corrected: 0 deg
-    period: 0.0457, // 16.69 Days
-    rotationPeriod: '16.7 天 (同步)',
+    period: 0.0457,
+    rotationPeriod: '16.69 天',
     rotationSpeed: 0.06, 
     description: '木衛四（Callisto）距離木星最遠，受到的潮汐力極小。它是一顆地質活動已經死寂的星球，表面布滿了密密麻麻的隕石坑，被認為是太陽系中最古老的地表之一，幾乎完整保留了 40 億年來的轟擊歷史。它可能擁有一個未完全分化的內部結構，即岩石與冰混合在一起，沒有形成明顯的地核。',
     observationInfo: '木衛四的亮度較暗（約 5.6 等），但仍在此雙筒望遠鏡的可見範圍內。由於其軌道半徑很大，它在木星兩側擺動的幅度也最大。在觀測時，它經常孤懸於木星遠處，需要對照星圖確認它不是背景恆星。觀察它完成一圈公轉需要半個多月。',
@@ -360,8 +354,8 @@ export const PLANETS: PlanetData[] = [
     orbitAngle: 0,
     inclination: 0.35, // Corrected: 0.35 deg inclination to Saturn equator
     axialTilt: 0.25, // Corrected: < 0.3 deg
-    period: 0.0436, // 15.945 Days
-    rotationPeriod: '15.9 天 (同步)',
+    period: 0.0437,
+    rotationPeriod: '15.96 天',
     rotationSpeed: 0.063,
     description: '土衛六（Titan）是土星最大的衛星，也是太陽系第二大衛星。它是唯一擁有濃厚大氣層的衛星，大氣壓力甚至是地球的 1.5 倍，主要由氮氣組成。其表面擁有液態甲烷和乙烷組成的湖泊與河流，形成了與地球極為相似的循環系統，只是流動的不是水。由於大氣中充滿了有機化合物的霧霾，其表面呈現出神秘的橘黃色。',
     observationInfo: '土衛六亮度約 8.4 等，是土星最容易觀測的衛星。使用小型天文望遠鏡（口徑 8 公分以上）即可看到它呈現為一個橘色的小光點在土星旁邊運行。由於它圍繞土星公轉的軌道面與土星環平行，我們可以觀察到它在土星周圍繞行一圈的完整過程，週期約為 16 天。',

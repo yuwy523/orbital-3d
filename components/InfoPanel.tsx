@@ -1,12 +1,11 @@
+
 import React, { useEffect, useState, useRef } from 'react';
-import { PlanetData, PlanetPosition } from '../types';
+import { PlanetData } from '../types';
 import { getObservationGuide } from '../services/geminiService';
-import { Telescope, Sparkles, Loader2, ArrowLeft, Eye, BookOpen, Lightbulb } from 'lucide-react';
+import { Telescope, Sparkles, Loader2, ArrowLeft, BookOpen, Lightbulb } from 'lucide-react';
 
 interface InfoPanelProps {
   planet: PlanetData;
-  calculateRealPosition: (id: string) => PlanetPosition;
-  earthRealPosition: PlanetPosition;
   onClose: () => void;
   showAxialTilt: boolean;
   onToggleAxialTilt: () => void;
@@ -14,8 +13,6 @@ interface InfoPanelProps {
 
 const InfoPanel: React.FC<InfoPanelProps> = ({ 
     planet, 
-    calculateRealPosition, 
-    earthRealPosition, 
     onClose,
     showAxialTilt,
     onToggleAxialTilt
@@ -32,53 +29,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       return [parts[0].trim(), parts[1]?.trim()];
   }, [planet.description]);
 
-  // Helper: Calculate Heliocentric Longitude (approximate)
-  const calculateHeliocentricLongitude = (pos: PlanetPosition) => {
-      let angle = Math.atan2(pos.y, pos.x) * (180 / Math.PI);
-      if (angle < 0) angle += 360;
-      return angle;
-  };
-
-  // Helper: Calculate Elongation & Orientation
-  const calculateElongation = () => {
-     if (planet.id === 'sun' || planet.id === 'earth') return "";
-     if (planet.id === 'moon') return "模型幾何計算參考: 月相隨地月日相對位置而變化";
-
-     const planetPos = calculateRealPosition(planet.id);
-     const earthPos = earthRealPosition;
-
-     const l_planet = calculateHeliocentricLongitude(planetPos);
-     const l_earth = calculateHeliocentricLongitude(earthPos);
-     
-     // Difference
-     let diff = l_planet - l_earth;
-     if (diff < 0) diff += 360;
-     
-     // Earth orbit is 2500, anything smaller is inner
-     const isInner = planet.orbitRadius < 2490; 
-     let relativeDesc = "";
-     
-     if (isInner) {
-         // Vector Earth->Sun
-         const esX = -earthPos.x;
-         const esY = -earthPos.y;
-         // Vector Earth->Planet
-         const epX = planetPos.x - earthPos.x;
-         const epY = planetPos.y - earthPos.y;
-         
-         const cross = esX * epY - esY * epX;
-         
-         if (cross > 0) relativeDesc = "東大距側 (昏星/日落後可見)";
-         else relativeDesc = "西大距側 (晨星/日出前可見)";
-     } else {
-         if (Math.abs(diff - 180) < 20) relativeDesc = "衝 (Opposition) - 整夜可見，最亮";
-         else if (diff < 20 || diff > 340) relativeDesc = "合 (Conjunction) - 接近太陽，不可見";
-         else relativeDesc = "一般觀測期";
-     }
-
-     return `模型幾何計算參考: 行星位於太陽${relativeDesc}`;
-  };
-
   // Helper for inclination text context
   const getInclinationSuffix = () => {
       if (planet.parentId === 'jupiter') return '(對木星赤道)';
@@ -94,6 +44,42 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       if (!s.includes('.')) return val.toFixed(2);
       const decimals = s.split('.')[1].length;
       return decimals < 2 ? val.toFixed(2) : s;
+  };
+
+  // Helper: Format Orbital Period (Dynamic units & decimal places)
+  // Logic: 
+  // 1. Convert to appropriate unit (Year -> Day -> Hour)
+  // 2. Format to 2 decimal places fixed
+  // 3. Parse back to float to remove trailing zeros (e.g. "1.00" -> 1, "24.50" -> 24.5)
+  const formatOrbitalPeriod = (periodInYears: number) => {
+      const years = Number(periodInYears);
+      if (isNaN(years) || years === 0) return 'N/A';
+      
+      // If strictly less than 1 year, convert to days
+      if (years < 1) {
+          const days = years * 365.25;
+          
+          // If strictly less than 1 day (24 hours), convert to hours
+          if (days < 1) {
+              const hours = days * 24;
+              return `${parseFloat(hours.toFixed(1))} 小時`;
+          }
+          
+          // Otherwise show in days
+          return `${parseFloat(days.toFixed(1))} 天`;
+      }
+      
+      // If 1 year or more, show in years
+      return `${parseFloat(years.toFixed(1))} 年`;
+  };
+
+  // Helper: Format Rotation Period String to dynamic decimals
+  const formatRotationString = (str: string) => {
+      // Find the first occurrence of a number (integer or float) and format it
+      // This preserves text like " (逆行)" while formatting the number "17.2"
+      return str.replace(/(\d+(\.\d+)?)/, (match) => {
+          return parseFloat(parseFloat(match).toFixed(1)).toString();
+      });
   };
 
   // Reset state when planet changes
@@ -120,7 +106,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       setHasRequestedGuide(true);
       setIsLoadingGuide(true);
       const todayStr = new Date().toLocaleDateString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric' });
-      const astronomyContext = calculateElongation();
+      
+      // Removed calculateElongation context since the mock service ignores it.
+      const astronomyContext = "";
 
       getObservationGuide(planet.name, todayStr, astronomyContext).then((guide) => {
           setAiGuide(guide);
@@ -254,11 +242,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                       <div className="bg-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-800 overflow-hidden">
                           {/* 1. Orbital Period */}
                           {planet.id !== 'sun' && (
-                            <StatRow label="公轉週期" value={planet.period === 0 ? 'N/A' : `${planet.period} 年`} />
+                            <StatRow label="公轉週期" value={formatOrbitalPeriod(planet.period)} />
                           )}
                           
                           {/* 2. Rotation Period */}
-                          <StatRow label="自轉週期" value={planet.rotationPeriod} />
+                          <StatRow label="自轉週期" value={formatRotationString(planet.rotationPeriod)} />
                           
                           {/* 3. Axial Tilt */}
                           <StatRow 

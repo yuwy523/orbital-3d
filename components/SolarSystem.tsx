@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -1087,9 +1088,11 @@ const SolarSystem: React.FC<SolarSystemProps> = ({
                 
                 const angleRad = (data.orbitAngle * Math.PI) / 180;
                 const x = xCenter * Math.cos(angleRad) - yCenter * Math.sin(angleRad);
-                const z = xCenter * Math.sin(angleRad) + yCenter * Math.cos(angleRad);
+                // FIX: Invert Z to match new coordinate system (-yPlane)
+                const z = -(xCenter * Math.sin(angleRad) + yCenter * Math.cos(angleRad));
                 
-                let vAngle = Math.atan2(z, x);
+                // atan2(y, x) -> atan2(-z, x) because z was -yPlane
+                let vAngle = Math.atan2(-z, x);
 
                 if (i > 0) {
                      let delta = vAngle - previousAngle;
@@ -1619,8 +1622,10 @@ const SolarSystem: React.FC<SolarSystemProps> = ({
                    const planetBody = tiltGroup.children.find((c: any) => c.name === 'planetMesh');
                    if (planetBody) {
                        if (pos.id === 'moon' || ['io', 'europa', 'ganymede', 'callisto', 'titan'].includes(pos.id)) {
-                           // Adjusted for tidal locking: add Math.PI offset to face the planet (inside) instead of space (outside)
-                           planetBody.rotation.y = -pos.angle + Math.PI;
+                           // Adjusted for tidal locking: 
+                           // Use POSITIVE angle (since orbit is counter-clockwise)
+                           // Subtract PI/2 to align front face to parent
+                           planetBody.rotation.y = pos.angle + Math.PI;
                        } else {
                            const speedFactor = PLANETS.find(p => p.id === pos.id)?.rotationSpeed || 1;
                            const baseSpeed = 0.000625; 

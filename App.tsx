@@ -44,7 +44,6 @@ const App: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeed] = useState(0.000625); // New Default speed (Was 0.005, now 1/8th of that)
   const [day, setDay] = useState(0); // Simulation day
-  const [realWorldDay, setRealWorldDay] = useState(0); // For Ephemeris
   const [selectedPlanetId, setSelectedPlanetId] = useState<string | null>(null);
   const [showOrbits, setShowOrbits] = useState(true);
   const [cameraResetTrigger, setCameraResetTrigger] = useState(0);
@@ -94,14 +93,6 @@ const App: React.FC = () => {
     setShowAxialTilt(false);
   }, [selectedPlanetId]);
 
-  // Calculate Real World Days since J2000 (Jan 1 2000 12:00 UTC)
-  useEffect(() => {
-    const j2000 = new Date('2000-01-01T12:00:00Z').getTime();
-    const now = new Date().getTime();
-    const daysSince = (now - j2000) / (1000 * 60 * 60 * 24);
-    setRealWorldDay(daysSince);
-  }, []);
-
   // Solve Kepler's Equation
   const solveKepler = useCallback((meanAnomaly: number, eccentricity: number): number => {
     let E = meanAnomaly; 
@@ -150,9 +141,11 @@ const App: React.FC = () => {
       const zHeight = planet.orbitRadius * Math.sin(inclinationRad) * Math.sin(trueAnomaly);
 
       // Initial Local Position (relative to orbit center)
+      // FIX: Invert Y-Plane mapped to Z to align with standard astronomical charts (North Up)
+      // Three.js Z is "Towards Viewer" (Down in top-down). We want +Y (North) to be Up (Screen Top), so -Z.
       let finalX = xPlane;
       let finalY = zHeight; 
-      let finalZ = yPlane;
+      let finalZ = -yPlane; 
 
       return {
         id: planet.id,
@@ -214,27 +207,6 @@ const App: React.FC = () => {
   const handleCloseDetail = useCallback(() => {
     setSelectedPlanetId(null);
   }, []);
-
-  // Helper wrapper for InfoPanel real position calculation
-  const calcRealPosWrapper = useCallback((pid: string) => {
-      const localPos = calculatePlanetPosition(pid, realWorldDay);
-      const pData = PLANETS.find(p => p.id === pid);
-      
-      if (pData?.parentId) {
-          const parentPos = calculatePlanetPosition(pData.parentId, realWorldDay);
-          return {
-              ...localPos,
-              x: localPos.x + parentPos.x,
-              y: localPos.y + parentPos.y,
-              z: localPos.z + parentPos.z
-          };
-      }
-      return localPos;
-  }, [calculatePlanetPosition, realWorldDay]);
-
-  const earthRealPos = useMemo(() => {
-    return calculatePlanetPosition('earth', realWorldDay);
-  }, [calculatePlanetPosition, realWorldDay]);
 
   // Grouped Planets for Sidebar
   const stars = useMemo(() => PLANETS.filter(p => p.type === 'star'), []);
@@ -406,8 +378,6 @@ const App: React.FC = () => {
                 {detailPlanet && (
                   <InfoPanel 
                     planet={detailPlanet} 
-                    calculateRealPosition={calcRealPosWrapper}
-                    earthRealPosition={earthRealPos}
                     onClose={handleCloseDetail} 
                     showAxialTilt={showAxialTilt}
                     onToggleAxialTilt={toggleAxialTilt}
